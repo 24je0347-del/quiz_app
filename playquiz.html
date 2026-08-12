@@ -244,6 +244,7 @@
             var perscore = (score / 10) * 100;
 
             alert("percentage score: " + " " + perscore + "%");
+            saveAttemptToLocalStorage(score, 10);
             addDoc(rowRef, {
                 name: nameuser,
                 value: score
@@ -257,6 +258,31 @@
     var demovariable;
     var book = [];
     var newbook = []
+
+    // ---- LocalStorage progress tracking ----
+    // Persists quiz history, performance metrics, and score logs across
+    // session refreshes, independent of the Firebase leaderboard.
+    function saveAttemptToLocalStorage(finalScore, totalQuestions) {
+        var history = JSON.parse(localStorage.getItem('quizHistory') || '[]');
+        var percentage = Math.round((finalScore / totalQuestions) * 100);
+        history.push({
+            date: new Date().toISOString(),
+            score: finalScore,
+            total: totalQuestions,
+            percentage: percentage
+        });
+        localStorage.setItem('quizHistory', JSON.stringify(history));
+
+        // Rolling performance metrics (best score, average, attempts count)
+        var best = Math.max(percentage, Number(localStorage.getItem('bestPercentage') || 0));
+        localStorage.setItem('bestPercentage', best);
+
+        var attempts = Number(localStorage.getItem('attemptCount') || 0) + 1;
+        localStorage.setItem('attemptCount', attempts);
+
+        var runningTotal = Number(localStorage.getItem('percentageTotal') || 0) + percentage;
+        localStorage.setItem('percentageTotal', runningTotal);
+    }
 
 
     ///getting documne tin array 
@@ -341,6 +367,7 @@
                     var perscore = (score / 10) * 100;
 
                     alert("percentage score: " + " " + perscore + "%");
+                    saveAttemptToLocalStorage(score, 10);
                     addDoc(rowRef, {
                         name: nameuser,
                         value: score
@@ -367,6 +394,7 @@
                         var perscore = (score / 10) * 100;
 
                         alert("percentage score: " + " " + perscore + "%");
+                        saveAttemptToLocalStorage(score, 10);
                         addDoc(rowRef, {
                             name: nameuser,
                             value: score

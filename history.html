@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz History</title>
+</head>
+<style>
+    body {
+        padding: 0px;
+        margin: 0px;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+    }
+
+    .heading {
+        border-bottom: 2px solid black;
+        background-color: rgba(46, 191, 196, 0.594);
+    }
+
+    .innerheading {
+        padding: 20px 0px;
+        font-size: 2.3rem;
+        text-align: center;
+    }
+
+    .metrics {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin: 30px 0px;
+        flex-wrap: wrap;
+    }
+
+    .metric-card {
+        background-color: rgba(128, 128, 128, 0.078);
+        border-radius: 8px;
+        padding: 20px 30px;
+        text-align: center;
+        min-width: 140px;
+    }
+
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+    }
+
+    .metric-label {
+        font-size: 0.95rem;
+        color: #555;
+    }
+
+    table {
+        width: 70%;
+        margin: 30px auto;
+        border-collapse: collapse;
+    }
+
+    th, td {
+        border: 1px solid #ccc;
+        padding: 10px 14px;
+        text-align: center;
+    }
+
+    th {
+        background-color: lightseagreen;
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        margin-top: 40px;
+        font-size: 1.2rem;
+        color: #666;
+    }
+
+    .actions {
+        text-align: center;
+        margin: 20px 0px 40px;
+    }
+
+    .clear-btn {
+        padding: 10px 24px;
+        background-color: #b33636;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        cursor: pointer;
+    }
+
+    .clear-btn:hover {
+        background-color: #8a2a2a;
+    }
+</style>
+
+<body>
+    <div class="heading">
+        <div class="innerheading">Your Quiz History</div>
+    </div>
+
+    <div class="metrics" id="metrics"></div>
+
+    <div id="tableWrapper"></div>
+
+    <div class="actions">
+        <button class="clear-btn" id="clearHistory">Clear history</button>
+    </div>
+
+    <script>
+        function loadHistory() {
+            return JSON.parse(localStorage.getItem('quizHistory') || '[]');
+        }
+
+        function renderMetrics(history) {
+            var metricsEl = document.getElementById('metrics');
+            var attempts = history.length;
+            var best = attempts ? Math.max(...history.map(function (h) { return h.percentage; })) : 0;
+            var avg = attempts
+                ? Math.round(history.reduce(function (sum, h) { return sum + h.percentage; }, 0) / attempts)
+                : 0;
+
+            metricsEl.innerHTML =
+                '<div class="metric-card"><div class="metric-value">' + attempts + '</div><div class="metric-label">Attempts</div></div>' +
+                '<div class="metric-card"><div class="metric-value">' + best + '%</div><div class="metric-label">Best score</div></div>' +
+                '<div class="metric-card"><div class="metric-value">' + avg + '%</div><div class="metric-label">Average score</div></div>';
+        }
+
+        function renderTable(history) {
+            var wrapper = document.getElementById('tableWrapper');
+
+            if (!history.length) {
+                wrapper.innerHTML = '<div class="empty-state">No quiz attempts recorded on this device yet. Play a quiz to see your history here.</div>';
+                return;
+            }
+
+            var rows = history
+                .slice()
+                .reverse()
+                .map(function (h) {
+                    var date = new Date(h.date);
+                    return '<tr>' +
+                        '<td>' + date.toLocaleDateString() + ' ' + date.toLocaleTimeString() + '</td>' +
+                        '<td>' + h.score + ' / ' + h.total + '</td>' +
+                        '<td>' + h.percentage + '%</td>' +
+                        '</tr>';
+                })
+                .join('');
+
+            wrapper.innerHTML =
+                '<table>' +
+                '<tr><th>Date</th><th>Score</th><th>Percentage</th></tr>' +
+                rows +
+                '</table>';
+        }
+
+        function render() {
+            var history = loadHistory();
+            renderMetrics(history);
+            renderTable(history);
+        }
+
+        document.getElementById('clearHistory').addEventListener('click', function () {
+            localStorage.removeItem('quizHistory');
+            localStorage.removeItem('bestPercentage');
+            localStorage.removeItem('attemptCount');
+            localStorage.removeItem('percentageTotal');
+            render();
+        });
+
+        render();
+    </script>
+</body>
+
+</html>

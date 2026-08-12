@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support This Project</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<style>
+    body {
+        padding: 0px;
+        margin: 0px;
+        font-family: Verdana, Geneva, Tahoma, sans-serif;
+    }
+
+    .heading {
+        border-bottom: 2px solid black;
+        background-color: rgba(46, 191, 196, 0.594);
+    }
+
+    .innerheading {
+        padding: 20px 0px;
+        font-size: 2.3rem;
+        text-align: center;
+    }
+
+    .card {
+        width: 340px;
+        margin: 60px auto;
+        padding: 30px;
+        border-radius: 8px;
+        background-color: rgba(128, 128, 128, 0.078);
+        text-align: center;
+    }
+
+    .amounts {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0px;
+        flex-wrap: wrap;
+    }
+
+    .amount-btn {
+        padding: 10px 18px;
+        border: 2px solid lightseagreen;
+        border-radius: 20px;
+        background: white;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .amount-btn.selected {
+        background-color: lightseagreen;
+        color: white;
+    }
+
+    #payBtn {
+        margin-top: 20px;
+        padding: 12px 40px;
+        background-color: black;
+        color: whitesmoke;
+        font-size: 1.2rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    #payBtn:hover {
+        background-color: cornflowerblue;
+    }
+
+    #status {
+        margin-top: 16px;
+        font-size: 0.95rem;
+    }
+</style>
+
+<body>
+    <div class="heading">
+        <div class="innerheading">Support This Project</div>
+    </div>
+
+    <div class="card">
+        <p>Enjoyed the quiz? A small donation helps keep it running.</p>
+
+        <div class="amounts" id="amounts">
+            <button class="amount-btn" data-amount="50">₹50</button>
+            <button class="amount-btn" data-amount="100">₹100</button>
+            <button class="amount-btn" data-amount="250">₹250</button>
+        </div>
+
+        <button id="payBtn">Donate</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        // NOTE: In production this key should be a real Razorpay Key ID,
+        // and the order should be created on a backend endpoint (via the
+        // Razorpay Orders API) rather than passed directly from the client,
+        // so the amount can't be tampered with in the browser. For a
+        // client-side-only donation flow like this project's, Razorpay's
+        // Checkout can be opened directly with an amount, which is fine
+        // for low-stakes/demo payments but should be swapped for a
+        // server-created order before going live.
+        var RAZORPAY_KEY_ID = "rzp_test_1DP5mmOlF5G5ag"; // Razorpay's public test key
+
+        var selectedAmount = 100;
+
+        document.querySelectorAll('.amount-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                document.querySelectorAll('.amount-btn').forEach(function (b) {
+                    b.classList.remove('selected');
+                });
+                btn.classList.add('selected');
+                selectedAmount = Number(btn.dataset.amount);
+            });
+        });
+        document.querySelector('.amount-btn').classList.add('selected');
+
+        document.getElementById('payBtn').addEventListener('click', function () {
+            var options = {
+                key: RAZORPAY_KEY_ID,
+                amount: selectedAmount * 100, // Razorpay expects paise
+                currency: "INR",
+                name: "Quiz App",
+                description: "Support donation",
+                handler: function (response) {
+                    document.getElementById('status').innerText =
+                        "Thanks for your support! Payment ID: " + response.razorpay_payment_id;
+
+                    // Log the donation locally alongside quiz history/score logs
+                    var donations = JSON.parse(localStorage.getItem('donationLog') || '[]');
+                    donations.push({
+                        date: new Date().toISOString(),
+                        amount: selectedAmount,
+                        paymentId: response.razorpay_payment_id
+                    });
+                    localStorage.setItem('donationLog', JSON.stringify(donations));
+                },
+                theme: {
+                    color: "#20b2aa"
+                }
+            };
+
+            var rzp = new Razorpay(options);
+            rzp.on('payment.failed', function (response) {
+                document.getElementById('status').innerText =
+                    "Payment failed: " + response.error.description;
+            });
+            rzp.open();
+        });
+    </script>
+</body>
+
+</html>
